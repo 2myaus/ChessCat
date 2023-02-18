@@ -64,6 +64,12 @@ namespace ChessCat
             BKRookMoved = false;
         }
 
+        void SwapToPlay()
+        {
+            if (ToPlay == ChessColor.Black) ToPlay = ChessColor.White;
+            else ToPlay = ChessColor.Black;
+        }
+
         List<ChessSquare> GetPossibleMovesFrom(ChessSquare square) //NOTE: "Possible" moves are any "legal" moves plus those which could move into check
         {
             Piece pieceType = GetPiece(square);
@@ -453,14 +459,7 @@ namespace ChessCat
                 }
                 return possibleSquares;
             searchEnd:
-                if (ToPlay == ChessColor.White)
-                {
-                    ToPlay = ChessColor.Black;
-                }
-                else
-                {
-                    ToPlay = ChessColor.White;
-                }
+                SwapToPlay();
                 for (byte x = 0; x <= 7; x++)
                 {
                     for (byte y = 0; y <= 7; y++)
@@ -473,14 +472,7 @@ namespace ChessCat
                     }
                 }
             resetPosition:
-                if (ToPlay == ChessColor.White)
-                {
-                    ToPlay = ChessColor.Black;
-                }
-                else
-                {
-                    ToPlay = ChessColor.White;
-                }
+                SwapToPlay();
                 SetPiece(possibleSquare, capturedPiece);
                 SetPiece(square, piece);
             }
@@ -593,6 +585,48 @@ namespace ChessCat
             }
 
             return new ChessMove(origin, destination);
+        }
+
+        public bool IsStalemate()
+        {
+            if(GetLegalMoves().Count != 0)
+            {
+                return false;
+            }
+            SwapToPlay();
+            Piece targetPiece = Piece.BKing;
+            if (ToPlay == ChessColor.Black) targetPiece = Piece.WKing;
+            foreach(ChessMove m in GetLegalMoves())
+            {
+                if(GetPiece(m.destination) == targetPiece)
+                {
+                    SwapToPlay();
+                    return false;
+                }
+            }
+            SwapToPlay();
+            return true;
+        }
+
+        public bool IsCheckmate()
+        {
+            if (GetLegalMoves().Count != 0)
+            {
+                return false;
+            }
+            SwapToPlay();
+            Piece targetPiece = Piece.BKing;
+            if (ToPlay == ChessColor.Black) targetPiece = Piece.WKing;
+            foreach (ChessMove m in GetLegalMoves())
+            {
+                if (GetPiece(m.destination) == targetPiece)
+                {
+                    SwapToPlay();
+                    return true;
+                }
+            }
+            SwapToPlay();
+            return false;
         }
 
         public char GetPieceLetter(Piece piece)
@@ -782,14 +816,7 @@ namespace ChessCat
 
             if (piece == Piece.WPawn && move.destination.y - move.origin.y == 2) SetPiece(move.destination.x, (byte)(move.destination.y - 1), Piece.FakeWPawn);
             else if (piece == Piece.BPawn && move.destination.y - move.origin.y == -2) SetPiece(move.destination.x, (byte)(move.destination.y + 1), Piece.FakeBPawn);
-            if(ToPlay == ChessColor.White)
-            {
-                ToPlay = ChessColor.Black;
-            }
-            else
-            {
-                ToPlay = ChessColor.White;
-            }
+            SwapToPlay();
 
             if(piece == Piece.BKing) BKingMoved = true;
             else if(piece == Piece.WKing) WKingMoved = true;
